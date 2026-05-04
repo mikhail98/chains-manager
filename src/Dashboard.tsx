@@ -207,7 +207,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   title: { fontSize: 14, fontWeight: 600, color: "#888", letterSpacing: "-0.2px" },
   headerActions: { display: "flex", alignItems: "center", gap: 8 },
-  importErr: { fontSize: 12, color: "#f87171" },
   btn: {
     padding: "6px 16px",
     background: "#1d1d2e",
