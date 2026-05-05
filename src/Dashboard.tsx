@@ -55,8 +55,11 @@ export default function Dashboard({ onLogout }: Props) {
 
   function handleChainUpdate(updated: Chain) {
     setChains((prev) =>
-      prev.map((c) => (c.chainId === updated.chainId ? updated : c))
+      prev.map((c) => (c.chainId === selectedId ? updated : c))
     );
+    if (updated.chainId !== selectedId) {
+      setSelectedId(updated.chainId);
+    }
   }
 
   function handleAddChain() {
@@ -146,7 +149,7 @@ export default function Dashboard({ onLogout }: Props) {
             <div style={s.editorWrap}>
               {selected ? (
                 <ChainEditor
-                  key={selected.chainId}
+                  key={selectedId}
                   chain={selected}
                   onChange={handleChainUpdate}
                   onDelete={() => handleDeleteChain(selected.chainId)}

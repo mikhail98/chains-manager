@@ -8,8 +8,7 @@ interface Props {
 }
 
 function buildHierarchy(chains: Chain[]): Array<{ chain: Chain; depth: number }> {
-  const key = (c: Chain) => c.genesisHash ?? c.chainId;
-  const byKey = new Map(chains.map((c) => [key(c), c]));
+  const byId = new Map(chains.map((c) => [c.chainId, c]));
   const result: Array<{ chain: Chain; depth: number }> = [];
   const placed = new Set<string>();
 
@@ -18,12 +17,12 @@ function buildHierarchy(chains: Chain[]): Array<{ chain: Chain; depth: number }>
     placed.add(chain.chainId);
     result.push({ chain, depth });
     chains
-      .filter((c) => c.parentId && c.parentId === key(chain) && !placed.has(c.chainId))
+      .filter((c) => c.parentId && c.parentId === chain.chainId && !placed.has(c.chainId))
       .forEach((child) => addChain(child, depth + 1));
   }
 
   chains
-    .filter((c) => !c.parentId || !byKey.has(c.parentId))
+    .filter((c) => !c.parentId || !byId.has(c.parentId))
     .forEach((root) => addChain(root, 0));
 
   chains

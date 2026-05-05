@@ -3,9 +3,6 @@ import type { FirebaseConfig } from "./types";
 const SESSION_KEY = "chains_authed";
 const FB_CONFIG_KEY = "chains_fb_config";
 
-export const checkPassword = (input: string): boolean =>
-  input === import.meta.env.VITE_PASSWORD;
-
 export const saveSession = (): void =>
   localStorage.setItem(SESSION_KEY, "1");
 

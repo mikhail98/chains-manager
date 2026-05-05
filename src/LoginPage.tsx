@@ -1,32 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { checkPassword, saveSession, saveFirebaseConfig, getFirebaseConfig } from "./auth";
+import { saveSession, saveFirebaseConfig } from "./auth";
 import { initFirebase } from "./firebase";
 import type { FirebaseConfig } from "./types";
 
 interface Props {
   onSuccess: () => void;
-}
-
-const TEMPLATE = `{
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  measurementId: ""
-}`;
-
-function configToString(c: FirebaseConfig): string {
-  return `{
-  apiKey: "${c.apiKey}",
-  authDomain: "${c.authDomain}",
-  projectId: "${c.projectId}",
-  storageBucket: "${c.storageBucket}",
-  messagingSenderId: "${c.messagingSenderId}",
-  appId: "${c.appId}",
-  measurementId: "${c.measurementId ?? ""}"
-}`;
 }
 
 function parseConfig(raw: string): FirebaseConfig {
@@ -44,9 +22,7 @@ function parseConfig(raw: string): FirebaseConfig {
 }
 
 export default function LoginPage({ onSuccess }: Props) {
-  const saved = getFirebaseConfig();
-  const [configStr, setConfigStr] = useState(saved ? configToString(saved) : TEMPLATE);
-  const [password, setPassword] = useState("");
+  const [configStr, setConfigStr] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -63,13 +39,7 @@ export default function LoginPage({ onSuccess }: Props) {
     }
 
     if (!config.apiKey || !config.projectId) {
-      setError("Fill apiKey and projectId at minimum");
-      return;
-    }
-
-    if (!checkPassword(password)) {
-      setError("Incorrect password");
-      setPassword("");
+      setError("apiKey and projectId are required");
       return;
     }
 
@@ -93,22 +63,14 @@ export default function LoginPage({ onSuccess }: Props) {
           value={configStr}
           onChange={(e) => { setConfigStr(e.target.value); setError(""); }}
           style={s.textarea}
+          placeholder={"paste Firebase config here\n{ apiKey: \"...\", projectId: \"...\", ... }"}
           spellCheck={false}
           autoComplete="off"
+          autoFocus
         />
-        <div style={s.row}>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(""); }}
-            placeholder="Password"
-            autoComplete="current-password"
-            style={{ ...s.input, flex: 1 }}
-          />
-          <button type="submit" disabled={loading} style={s.button}>
-            {loading ? "Connecting…" : "Enter"}
-          </button>
-        </div>
+        <button type="submit" disabled={loading} style={s.button}>
+          {loading ? "Connecting…" : "Connect"}
+        </button>
         {error && <p style={s.error}>{error}</p>}
       </form>
     </div>
@@ -154,17 +116,6 @@ const s: Record<string, React.CSSProperties> = {
     outline: "none",
     height: 178,
   },
-  row: { display: "flex", gap: 8 },
-  input: {
-    padding: "9px 12px",
-    borderRadius: 8,
-    border: "1px solid #2a2a2a",
-    background: "#111",
-    color: "#f0f0f0",
-    fontSize: 13,
-    outline: "none",
-    minWidth: 0,
-  },
   button: {
     padding: "9px 24px",
     borderRadius: 8,
@@ -174,7 +125,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 500,
     cursor: "pointer",
-    flexShrink: 0,
   },
   error: { margin: 0, fontSize: 13, color: "#f87171" },
 };

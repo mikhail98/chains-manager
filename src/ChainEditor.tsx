@@ -120,14 +120,14 @@ function KVEditor({
 const kv: Record<string, React.CSSProperties> = {
   root: { display: "flex", flexDirection: "column", gap: 6 },
   row: { display: "flex", gap: 8, alignItems: "center" },
-  boolLabel: { display: "flex", alignItems: "center", gap: 6, color: "#ccc", fontSize: 14, flex: 1 },
+  boolLabel: { display: "flex", alignItems: "center", gap: 6, color: "#ccc", fontSize: 15, flex: 1 },
   typeSelect: {
     padding: "5px 6px",
     background: "#1a1a2e",
     color: "#a78bfa",
     border: "1px solid #2a2a4a",
     borderRadius: 6,
-    fontSize: 12,
+    fontSize: 13,
     cursor: "pointer",
     flexShrink: 0,
     outline: "none",
@@ -229,8 +229,15 @@ function GeneralEditor({ chain, onChange }: { chain: Chain; onChange: (c: Chain)
     chain.types ? JSON.stringify(chain.types, null, 2) : "null"
   );
   const [typesErr, setTypesErr] = useState("");
+  const [editingChainId, setEditingChainId] = useState(false);
+  const [chainIdDraft, setChainIdDraft] = useState(chain.chainId);
 
   function upd(partial: Partial<Chain>) { onChange({ ...chain, ...partial }); }
+
+  function saveChainId() {
+    upd({ chainId: chainIdDraft });
+    setEditingChainId(false);
+  }
 
   return (
     <div style={s.section}>
@@ -250,17 +257,34 @@ function GeneralEditor({ chain, onChange }: { chain: Chain; onChange: (c: Chain)
 
       <div style={s.grid2}>
         <Field label="Chain ID">
-          <input
-            value={chain.chainId}
-            onChange={(e) => upd({ chainId: e.target.value })}
-            style={{ ...s.input, fontFamily: "monospace", fontSize: 13 }}
-          />
+          {editingChainId ? (
+            <div style={{ display: "flex", gap: 6 }}>
+              <input
+                value={chainIdDraft}
+                onChange={(e) => setChainIdDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveChainId(); if (e.key === "Escape") setEditingChainId(false); }}
+                style={{ ...s.input, fontFamily: "monospace", flex: 1 }}
+                autoFocus
+              />
+              <Btn onClick={saveChainId}>Save</Btn>
+              <Btn onClick={() => setEditingChainId(false)} muted>Cancel</Btn>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ ...s.input, fontFamily: "monospace", flex: 1, color: "#aaa", userSelect: "all" as const }}>
+                {chain.chainId}
+              </span>
+              <button onClick={() => { setChainIdDraft(chain.chainId); setEditingChainId(true); }} style={{ ...s.btnMuted, padding: "8px 18px" }}>
+                Edit
+              </button>
+            </div>
+          )}
         </Field>
         <Field label="Genesis Hash">
           <input
             value={chain.genesisHash ?? ""}
             onChange={(e) => upd({ genesisHash: e.target.value || undefined })}
-            style={{ ...s.input, fontFamily: "monospace", fontSize: 13 }}
+            style={{ ...s.input, fontFamily: "monospace" }}
             placeholder="0x..."
           />
         </Field>
@@ -412,6 +436,7 @@ function AssetsEditor({ assets, onChange }: { assets: Asset[]; onChange: (a: Ass
             <th style={s.th}>Symbol</th>
             <th style={s.th}>Precision</th>
             <th style={s.th}>Type</th>
+            <th style={s.th}>typeExtras</th>
             <th style={s.th}>Price ID</th>
             <th style={{ ...s.th, width: 90 }} />
           </tr>
@@ -420,7 +445,7 @@ function AssetsEditor({ assets, onChange }: { assets: Asset[]; onChange: (a: Ass
           {assets.map((asset, idx) =>
             editing === idx ? (
               <tr key={idx}>
-                <td colSpan={6} style={s.td}>
+                <td colSpan={7} style={s.td}>
                   <AssetForm draft={draft} onChange={setDraft} onSave={commit} onCancel={() => setEditing(null)} />
                 </td>
               </tr>
@@ -430,6 +455,11 @@ function AssetsEditor({ assets, onChange }: { assets: Asset[]; onChange: (a: Ass
                 <td style={{ ...s.td, fontWeight: 600, color: "#a78bfa" }}>{asset.symbol}</td>
                 <td style={s.td}>{asset.precision}</td>
                 <td style={{ ...s.td, color: "#888" }}>{asset.type ?? "—"}</td>
+                <td style={{ ...s.td, fontFamily: "monospace", fontSize: 11, color: "#666" }}>
+                  {asset.typeExtras
+                    ? Object.entries(asset.typeExtras).map(([k, v]) => `${k}=${String(v)}`).join(", ")
+                    : "—"}
+                </td>
                 <td style={{ ...s.td, fontFamily: "monospace", fontSize: 12, color: "#666" }}>{asset.priceId}</td>
                 <td style={s.td}>
                   <RowActions onEdit={() => openEdit(idx)} onDelete={() => onChange(assets.filter((_, i) => i !== idx))} />
@@ -616,38 +646,38 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  chainName: { fontSize: 19, fontWeight: 600, color: "#f0f0f0", marginBottom: 4 },
-  chainId: { fontSize: 12, fontFamily: "monospace", color: "#444", wordBreak: "break-all" },
+  chainName: { fontSize: 21, fontWeight: 600, color: "#f0f0f0", marginBottom: 4 },
+  chainId: { fontSize: 13, fontFamily: "monospace", color: "#444", wordBreak: "break-all" },
   deleteBtn: {
     padding: "5px 14px",
     background: "transparent",
     color: "#f87171",
     border: "1px solid #3a1a1a",
     borderRadius: 6,
-    fontSize: 12,
+    fontSize: 13,
     cursor: "pointer",
     flexShrink: 0,
   },
   tabs: { display: "flex", borderBottom: "1px solid #1e1e1e", padding: "0 16px" },
-  tab: { padding: "10px 16px", background: "none", border: "none", color: "#666", fontSize: 14, cursor: "pointer", borderBottom: "2px solid transparent", marginBottom: -1 },
+  tab: { padding: "10px 18px", background: "none", border: "none", color: "#666", fontSize: 15, cursor: "pointer", borderBottom: "2px solid transparent", marginBottom: -1 },
   activeTab: { color: "#f0f0f0", borderBottomColor: "#4f46e5" },
   tabBody: { flex: 1, overflow: "auto", padding: 28, display: "flex", flexDirection: "column", gap: 18 },
   section: { display: "flex", flexDirection: "column", gap: 18 },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 14 },
-  th: { textAlign: "left", padding: "9px 12px", color: "#555", fontWeight: 500, borderBottom: "1px solid #1e1e1e", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 15 },
+  th: { textAlign: "left", padding: "9px 12px", color: "#555", fontWeight: 500, borderBottom: "1px solid #1e1e1e", fontSize: 13, textTransform: "uppercase", letterSpacing: "0.05em" },
   td: { padding: "11px 12px", borderBottom: "1px solid #161616", color: "#ccc" },
   inlineForm: { display: "flex", gap: 8, alignItems: "center", padding: "6px 0" },
   assetForm: { display: "flex", flexDirection: "column", gap: 12, padding: "12px 0" },
   formRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
   formActions: { display: "flex", gap: 8 },
-  label: { fontSize: 13, color: "#666", flexShrink: 0 },
-  input: { padding: "8px 12px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#f0f0f0", fontSize: 14, outline: "none", minWidth: 0 },
-  btnPrimary: { padding: "7px 16px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, cursor: "pointer", fontWeight: 500 },
-  btnMuted: { padding: "7px 16px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 14, cursor: "pointer" },
-  addBtn: { marginTop: 4, padding: "7px 16px", background: "transparent", color: "#4f46e5", border: "1px dashed #2a2a4a", borderRadius: 6, fontSize: 14, cursor: "pointer", alignSelf: "flex-start" },
-  rowBtn: { padding: "4px 12px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 4, fontSize: 12, cursor: "pointer" },
-  rowBtnDanger: { padding: "4px 12px", background: "transparent", color: "#f87171", border: "1px solid #3a1a1a", borderRadius: 4, fontSize: 12, cursor: "pointer" },
-  jsonArea: { flex: 1, minHeight: 80, background: "#111", border: "1px solid #222", borderRadius: 8, color: "#d4d4d4", fontFamily: "monospace", fontSize: 14, padding: 14, resize: "vertical", outline: "none", lineHeight: 1.6, width: "100%", boxSizing: "border-box" },
+  label: { fontSize: 14, color: "#666", flexShrink: 0 },
+  input: { padding: "8px 12px", background: "#111", border: "1px solid #2a2a2a", borderRadius: 6, color: "#f0f0f0", fontSize: 15, outline: "none", minWidth: 0 },
+  btnPrimary: { padding: "7px 18px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, cursor: "pointer", fontWeight: 500 },
+  btnMuted: { padding: "7px 18px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 15, cursor: "pointer" },
+  addBtn: { marginTop: 4, padding: "7px 16px", background: "transparent", color: "#4f46e5", border: "1px dashed #2a2a4a", borderRadius: 6, fontSize: 15, cursor: "pointer", alignSelf: "flex-start" },
+  rowBtn: { padding: "4px 12px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 4, fontSize: 13, cursor: "pointer" },
+  rowBtnDanger: { padding: "4px 12px", background: "transparent", color: "#f87171", border: "1px solid #3a1a1a", borderRadius: 4, fontSize: 13, cursor: "pointer" },
+  jsonArea: { flex: 1, minHeight: 80, background: "#111", border: "1px solid #222", borderRadius: 8, color: "#d4d4d4", fontFamily: "monospace", fontSize: 15, padding: 14, resize: "vertical", outline: "none", lineHeight: 1.6, width: "100%", boxSizing: "border-box" },
   errorMsg: { margin: 0, fontSize: 13, color: "#f87171" },
 };
