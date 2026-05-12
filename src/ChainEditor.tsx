@@ -1,10 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import type { Chain, ChainNode, Asset, Explorer } from "./types";
 
+const TrashIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4h6v2" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
 interface Props {
   chain: Chain;
   onChange: (updated: Chain) => void;
-  onDelete: () => void;
 }
 
 type Tab = "general" | "nodes" | "assets" | "explorers" | "json";
@@ -101,9 +116,9 @@ function KVEditor({
           </select>
           <button
             onClick={() => commit(pairs.filter((_, i) => i !== idx))}
-            style={s.rowBtnDanger}
+            style={s.trashBtn}
           >
-            ×
+            <TrashIcon />
           </button>
         </div>
       ))}
@@ -136,7 +151,7 @@ const kv: Record<string, React.CSSProperties> = {
 
 /* ── Chain Editor ── */
 
-export default function ChainEditor({ chain, onChange, onDelete }: Props) {
+export default function ChainEditor({ chain, onChange }: Props) {
   const [tab, setTab] = useState<Tab>("general");
   const [jsonStr, setJsonStr] = useState(() => JSON.stringify(chain, null, 2));
   const [jsonError, setJsonError] = useState("");
@@ -179,7 +194,6 @@ export default function ChainEditor({ chain, onChange, onDelete }: Props) {
           <div style={s.chainName}>{chain.name}</div>
           <div style={s.chainId}>{chain.chainId}</div>
         </div>
-        <button onClick={onDelete} style={s.deleteBtn}>Delete chain</button>
       </div>
 
       <div style={s.tabs}>
@@ -274,8 +288,8 @@ function GeneralEditor({ chain, onChange }: { chain: Chain; onChange: (c: Chain)
               <span style={{ ...s.input, fontFamily: "monospace", flex: 1, color: "#aaa", userSelect: "all" as const }}>
                 {chain.chainId}
               </span>
-              <button onClick={() => { setChainIdDraft(chain.chainId); setEditingChainId(true); }} style={{ ...s.btnMuted, padding: "8px 18px" }}>
-                Edit
+              <button onClick={() => { setChainIdDraft(chain.chainId); setEditingChainId(true); }} style={s.editBtn}>
+                <EditIcon />
               </button>
             </div>
           )}
@@ -387,7 +401,17 @@ function NodesEditor({ nodes, onChange }: { nodes: ChainNode[]; onChange: (n: Ch
                 <td style={s.td}>{node.name}</td>
                 <td style={{ ...s.td, fontFamily: "monospace", fontSize: 12, color: "#888" }}>{node.url}</td>
                 <td style={s.td}>
-                  <RowActions onEdit={() => { setEditing(idx); setDraft({ ...node }); }} onDelete={() => onChange(nodes.filter((_, i) => i !== idx))} />
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <a
+                      href={`https://polkadot.js.org/apps/?rpc=${encodeURIComponent(node.url)}#/settings`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={s.rowBtnLink}
+                    >
+                      PJS&nbsp;↗
+                    </a>
+                    <RowActions onEdit={() => { setEditing(idx); setDraft({ ...node }); }} onDelete={() => onChange(nodes.filter((_, i) => i !== idx))} />
+                  </div>
                 </td>
               </tr>
             )
@@ -628,9 +652,9 @@ function AddBtn({ children, onClick }: { children: React.ReactNode; onClick: () 
 
 function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
-    <div style={{ display: "flex", gap: 4 }}>
-      <button onClick={onEdit} style={s.rowBtn}>Edit</button>
-      <button onClick={onDelete} style={s.rowBtnDanger}>Del</button>
+    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+      <button onClick={onEdit} style={s.editBtn}><EditIcon /></button>
+      <button onClick={onDelete} style={s.trashBtn}><TrashIcon /></button>
     </div>
   );
 }
@@ -648,16 +672,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   chainName: { fontSize: 21, fontWeight: 600, color: "#f0f0f0", marginBottom: 4 },
   chainId: { fontSize: 13, fontFamily: "monospace", color: "#444", wordBreak: "break-all" },
-  deleteBtn: {
-    padding: "5px 14px",
-    background: "transparent",
-    color: "#f87171",
-    border: "1px solid #3a1a1a",
-    borderRadius: 6,
-    fontSize: 13,
-    cursor: "pointer",
-    flexShrink: 0,
-  },
   tabs: { display: "flex", borderBottom: "1px solid #1e1e1e", padding: "0 16px" },
   tab: { padding: "10px 18px", background: "none", border: "none", color: "#666", fontSize: 15, cursor: "pointer", borderBottom: "2px solid transparent", marginBottom: -1 },
   activeTab: { color: "#f0f0f0", borderBottomColor: "#4f46e5" },
@@ -677,7 +691,10 @@ const s: Record<string, React.CSSProperties> = {
   btnMuted: { padding: "7px 18px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 6, fontSize: 15, cursor: "pointer" },
   addBtn: { marginTop: 4, padding: "7px 16px", background: "transparent", color: "#4f46e5", border: "1px dashed #2a2a4a", borderRadius: 6, fontSize: 15, cursor: "pointer", alignSelf: "flex-start" },
   rowBtn: { padding: "4px 12px", background: "transparent", color: "#888", border: "1px solid #2a2a2a", borderRadius: 4, fontSize: 13, cursor: "pointer" },
+  rowBtnLink: { padding: "4px 12px", background: "transparent", color: "#a78bfa", border: "1px solid #2a2a4a", borderRadius: 4, fontSize: 13, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap" },
   rowBtnDanger: { padding: "4px 12px", background: "transparent", color: "#f87171", border: "1px solid #3a1a1a", borderRadius: 4, fontSize: 13, cursor: "pointer" },
+  trashBtn: { background: "none", border: "none", color: "#555", cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center", borderRadius: 4 },
+  editBtn: { background: "none", border: "none", color: "#555", cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center", borderRadius: 4 },
   jsonArea: { flex: 1, minHeight: 80, background: "#111", border: "1px solid #222", borderRadius: 8, color: "#d4d4d4", fontFamily: "monospace", fontSize: 15, padding: 14, resize: "vertical", outline: "none", lineHeight: 1.6, width: "100%", boxSizing: "border-box" },
   errorMsg: { margin: 0, fontSize: 13, color: "#f87171" },
 };

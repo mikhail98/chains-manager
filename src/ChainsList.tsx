@@ -5,6 +5,7 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAdd: () => void;
+  onDelete: (id: string) => void;
 }
 
 function buildHierarchy(chains: Chain[]): Array<{ chain: Chain; depth: number }> {
@@ -32,7 +33,16 @@ function buildHierarchy(chains: Chain[]): Array<{ chain: Chain; depth: number }>
   return result;
 }
 
-export default function ChainsList({ chains, selectedId, onSelect, onAdd }: Props) {
+const TrashIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4h6v2" />
+  </svg>
+);
+
+export default function ChainsList({ chains, selectedId, onSelect, onAdd, onDelete }: Props) {
   const items = buildHierarchy(chains);
 
   return (
@@ -49,7 +59,7 @@ export default function ChainsList({ chains, selectedId, onSelect, onAdd }: Prop
         {items.map(({ chain, depth }) => {
           const isSelected = chain.chainId === selectedId;
           return (
-            <button
+            <div
               key={chain.chainId}
               onClick={() => onSelect(chain.chainId)}
               style={{
@@ -63,7 +73,17 @@ export default function ChainsList({ chains, selectedId, onSelect, onAdd }: Prop
               {chain.assets.length > 0 && (
                 <span style={s.badge}>{chain.assets.length}</span>
               )}
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Delete "${chain.name}"?`)) onDelete(chain.chainId);
+                }}
+                style={s.trashBtn}
+                title="Delete chain"
+              >
+                <TrashIcon />
+              </button>
+            </div>
           );
         })}
       </div>
@@ -122,15 +142,13 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 6,
-    paddingRight: 12,
+    paddingRight: 8,
     paddingTop: 8,
     paddingBottom: 8,
-    background: "none",
-    border: "none",
     color: "#aaa",
     fontSize: 14,
     cursor: "pointer",
-    textAlign: "left",
+    boxSizing: "border-box",
   },
   selected: { background: "#1d1d2e", color: "#f0f0f0" },
   indent: { color: "#333", fontSize: 12, flexShrink: 0 },
@@ -143,5 +161,16 @@ const s: Record<string, React.CSSProperties> = {
     padding: "1px 6px",
     borderRadius: 8,
     flexShrink: 0,
+  },
+  trashBtn: {
+    background: "none",
+    border: "none",
+    color: "#555",
+    cursor: "pointer",
+    padding: "2px 4px",
+    display: "flex",
+    alignItems: "center",
+    flexShrink: 0,
+    borderRadius: 4,
   },
 };

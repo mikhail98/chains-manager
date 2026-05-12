@@ -145,6 +145,7 @@ export default function Dashboard({ onLogout }: Props) {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onAdd={handleAddChain}
+              onDelete={handleDeleteChain}
             />
             <div style={s.editorWrap}>
               {selected ? (
@@ -152,7 +153,6 @@ export default function Dashboard({ onLogout }: Props) {
                   key={selectedId}
                   chain={selected}
                   onChange={handleChainUpdate}
-                  onDelete={() => handleDeleteChain(selected.chainId)}
                 />
               ) : (
                 <div style={s.centered}>Select a chain</div>
